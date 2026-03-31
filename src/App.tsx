@@ -19,7 +19,8 @@ import {
   Plus,
   ChevronRight,
   History,
-  Globe
+  Globe,
+  Download
 } from 'lucide-react';
 import { Task, TaskStatus, AgentRole, AuditLog, SubTask } from './types';
 import { clsx, type ClassValue } from 'clsx';
@@ -56,6 +57,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     ESCALATED: 'Escalated',
     escalationReason: 'Escalation Reason',
     escalationHint: 'This task was vetoed 3 times. Please review and either modify the prompt or resolve the issue.',
+    exportResult: 'Export Result',
+    exportHint: 'Download as markdown file',
   },
   zh: {
     appTitle: 'Edict 架构',
@@ -81,6 +84,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     ESCALATED: '已升级',
     escalationReason: '升级原因',
     escalationHint: '此任务已被否决3次。请检查并修改提示词或解决问题。',
+    exportResult: '导出成果',
+    exportHint: '下载 markdown 文件',
   },
 };
 
@@ -92,6 +97,19 @@ export default function App() {
   const [lang, setLang] = useState<Lang>('zh');
 
   const t = (key: string) => I18N[lang][key] || key;
+
+  const exportResult = () => {
+    if (!selectedTask?.metadata?.finalResult) return;
+    const content = selectedTask.metadata.finalResult;
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const title = selectedTask.title || 'task-result';
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const fetchTasks = async () => {
     const res = await fetch('/api/tasks');
@@ -409,8 +427,17 @@ export default function App() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-8"
                   >
-                    <h3 className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="w-3 h-3" /> {t('imperialDecreeFulfilled')}
+                    <h3 className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-4 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3 h-3" /> {t('imperialDecreeFulfilled')}
+                      </span>
+                      <button
+                        onClick={exportResult}
+                        className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400 text-[10px] font-mono uppercase tracking-wider transition-colors"
+                        title={t('exportHint')}
+                      >
+                        <Download className="w-3 h-3" /> {t('exportResult')}
+                      </button>
                     </h3>
                     <div className="prose prose-invert prose-sm max-w-none">
                       <p className="text-zinc-200 leading-relaxed whitespace-pre-wrap">
