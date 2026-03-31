@@ -54,6 +54,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     PENDING: 'Pending',
     FAILED: 'Failed',
     ESCALATED: 'Escalated',
+    escalationReason: 'Escalation Reason',
+    escalationHint: 'This task was vetoed 3 times. Please review and either modify the prompt or resolve the issue.',
   },
   zh: {
     appTitle: 'Edict 架构',
@@ -77,6 +79,8 @@ const I18N: Record<Lang, Record<string, string>> = {
     PENDING: '待处理',
     FAILED: '失败',
     ESCALATED: '已升级',
+    escalationReason: '升级原因',
+    escalationHint: '此任务已被否决3次。请检查并修改提示词或解决问题。',
   },
 };
 
@@ -298,6 +302,37 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Escalation Reason */}
+                {selectedTask.status === TaskStatus.ESCALATED && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6"
+                  >
+                    <h3 className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <AlertCircle className="w-3 h-3" /> {t('ESCALATED')} — {t('escalationReason')}
+                    </h3>
+                    {(selectedTask.metadata?.feedback || selectedTask.metadata?.reason) && (
+                      <div className="mb-3 p-3 bg-zinc-950 border border-amber-500/10 rounded-xl">
+                        <p className="text-xs text-zinc-300 leading-relaxed">{selectedTask.metadata.feedback || selectedTask.metadata.reason}</p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {selectedTask.logs
+                        ?.filter((log: AuditLog) => log.action === 'VETOED')
+                        .map((log: AuditLog, idx: number) => (
+                          <div key={log.id} className="flex gap-2 items-start">
+                            <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">VETO #{idx + 1}</span>
+                            <p className="text-xs text-zinc-400 leading-relaxed flex-1">{log.content}</p>
+                          </div>
+                        ))}
+                    </div>
+                    <p className="text-[10px] text-zinc-600 mt-3 font-mono">
+                      {t('escalationHint')}
+                    </p>
+                  </motion.div>
+                )}
 
                 {/* Execution Details Grid */}
                 <div className="grid grid-cols-2 gap-6">
