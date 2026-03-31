@@ -3,9 +3,8 @@
  * API 文档: https://www.minimaxi.com/document
  */
 
-const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY!;
-const MINIMAX_BASE_URL = process.env.MINIMAX_BASE_URL || "https://api.minimax.chat";
-const MINIMAX_MODEL = process.env.MINIMAX_MODEL || "MiniMax-M2.7";
+// 注意：这些在模块加载时求值，必须在 dotenv 之后才能读到 env 变量
+// 因此改为函数内访问 process.env
 
 interface MinimaxMessage {
   role: "system" | "user" | "assistant";
@@ -27,7 +26,7 @@ export async function callMinimax(
   userPrompt: string,
   jsonMode: boolean = false
 ): Promise<string> {
-  const url = `${MINIMAX_BASE_URL}/text/chatcompletion_v2`;
+  const url = `${process.env.MINIMAX_BASE_URL}/text/chatcompletion_v2`;
 
   const messages: MinimaxMessage[] = [];
   if (systemPrompt) {
@@ -36,7 +35,7 @@ export async function callMinimax(
   messages.push({ role: "user", content: userPrompt });
 
   const payload: Record<string, any> = {
-    model: MINIMAX_MODEL,
+    model: process.env.MINIMAX_MODEL || "MiniMax-M2.7",
     messages,
   };
 
@@ -46,7 +45,7 @@ export async function callMinimax(
   }
 
   const headers = {
-    "Authorization": `Bearer ${MINIMAX_API_KEY}`,
+    "Authorization": `Bearer ${process.env.MINIMAX_API_KEY}`,
     "Content-Type": "application/json",
   };
 
@@ -58,10 +57,18 @@ export async function callMinimax(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Minimax API error: ${response.status} ${response.statusText} - ${errorText}`);
+    throw new Error(`Minimax API error: ${response.status} ${response.statusText} - ${errorText.slice(0, 200)}`);
   }
 
-  const data = await response.json() as { choices?: MinimaxChoice[]; base_resp?: { status_code?: number; status_msg?: string } };
+  const contentType = response.headers.get("content-type") || "";
+  let data: any;
+  if (contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    // Non-JSON response (e.g., HTML error page)
+    const text = await response.text();
+    throw new Error(`Minimax API returned non-JSON response (${response.status}): ${text.slice(0, 200)}`);
+  }
 
   const choices = data.choices;
   if (choices && choices.length > 0) {

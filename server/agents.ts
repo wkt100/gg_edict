@@ -5,6 +5,28 @@ import { callMinimax } from "./minimax";
 // Provider selection: "minimax" | "gemini"
 const AI_PROVIDER = process.env.AI_PROVIDER || "minimax";
 
+/** 从 LLM 输出中提取 JSON，处理 Markdown 代码块包裹 */
+function extractJson(text: string): string {
+  const lines = text.split("\n");
+  let endIdx = lines.length;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^```$/.test(lines[i].trim())) {
+      endIdx = i;
+      break;
+    }
+  }
+  let candidate = lines.slice(1, endIdx).join("\n").trim();
+  try { JSON.parse(candidate); return candidate; } catch {}
+
+  const first = lines[0].trim();
+  if (/^```$/.test(first)) {
+    candidate = lines.slice(1, endIdx).join("\n").trim();
+    try { JSON.parse(candidate); return candidate; } catch {}
+  }
+
+  return text.trim();
+}
+
 const SYSTEM_PROMPTS: Record<AgentRole, string> = {
   [AgentRole.TAIZI]: `You are the Crown Prince (Taizi). Your role is Intent Extraction & Triage. 
   Analyze the Emperor's (User) request and extract structured data.
@@ -41,7 +63,7 @@ export async function callAgent(role: AgentRole, prompt: string, schema?: any) {
     const result = await callMinimax(systemPrompt, prompt, !!schema);
     if (schema) {
       try {
-        return JSON.parse(result);
+        return JSON.parse(extractJson(result));
       } catch (e) {
         console.error(`Failed to parse agent response as JSON: ${result}`);
         throw new Error("Agent returned invalid JSON");
