@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AgentRole, TriageSchema, PlanningSchema, ReviewSchema } from "../src/types";
 import { callMinimax } from "./minimax";
+import { callDeepSeek } from "./deepseek";
 
 // Provider selection: "minimax" | "gemini"
 const AI_PROVIDER = process.env.AI_PROVIDER || "minimax";
@@ -61,6 +62,19 @@ export async function callAgent(role: AgentRole, prompt: string, schema?: any) {
 
   if (AI_PROVIDER === "minimax") {
     const result = await callMinimax(systemPrompt, prompt, !!schema);
+    if (schema) {
+      try {
+        return JSON.parse(extractJson(result));
+      } catch (e) {
+        console.error(`Failed to parse agent response as JSON: ${result}`);
+        throw new Error("Agent returned invalid JSON");
+      }
+    }
+    return result;
+  }
+
+  if (AI_PROVIDER === "deepseek") {
+    const result = await callDeepSeek(systemPrompt, prompt, !!schema);
     if (schema) {
       try {
         return JSON.parse(extractJson(result));
