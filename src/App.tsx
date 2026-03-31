@@ -18,7 +18,8 @@ import {
   Loader2,
   Plus,
   ChevronRight,
-  History
+  History,
+  Globe
 } from 'lucide-react';
 import { Task, TaskStatus, AgentRole, AuditLog, SubTask } from './types';
 import { clsx, type ClassValue } from 'clsx';
@@ -28,11 +29,65 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+type Lang = 'en' | 'zh';
+
+const I18N: Record<Lang, Record<string, string>> = {
+  en: {
+    appTitle: 'Edict Architecture',
+    appSubtitle: 'Multi-Agent Governance',
+    systemOnline: 'System Online',
+    issueNew: 'Issue New Decree',
+    inputPlaceholder: 'Enter your command for the empire...',
+    dispatch: 'Dispatch Decree',
+    recentDecrees: 'Recent Decrees',
+    auditTrail: 'Audit Trail',
+    ministryExecution: 'Ministry Execution',
+    awaitingDispatch: 'Awaiting Dispatch',
+    imperialDecreeFulfilled: 'Imperial Decree Fulfilled',
+    noDecreeSelected: 'No Decree Selected',
+    noDecreeHint: 'Select a task from the history or issue a new one',
+    TRIAGE: 'Triage',
+    PLANNING: 'Planning',
+    REVIEW: 'Review',
+    EXECUTING: 'Executing',
+    COMPLETED: 'Completed',
+    PENDING: 'Pending',
+    FAILED: 'Failed',
+    ESCALATED: 'Escalated',
+  },
+  zh: {
+    appTitle: 'Edict 架构',
+    appSubtitle: '多智能体治理',
+    systemOnline: '系统在线',
+    issueNew: '发布新法令',
+    inputPlaceholder: '输入帝国的命令...',
+    dispatch: '派遣法令',
+    recentDecrees: '近期法令',
+    auditTrail: '审计追踪',
+    ministryExecution: '部门执行',
+    awaitingDispatch: '等待派遣',
+    imperialDecreeFulfilled: '法令已完成',
+    noDecreeSelected: '未选择法令',
+    noDecreeHint: '从历史记录中选择任务或发布新法令',
+    TRIAGE: '分类',
+    PLANNING: '规划',
+    REVIEW: '审核',
+    EXECUTING: '执行中',
+    COMPLETED: '完成',
+    PENDING: '待处理',
+    FAILED: '失败',
+    ESCALATED: '已升级',
+  },
+};
+
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [newPrompt, setNewPrompt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lang, setLang] = useState<Lang>('en');
+
+  const t = (key: string) => I18N[lang][key] || key;
 
   const fetchTasks = async () => {
     const res = await fetch('/api/tasks');
@@ -113,14 +168,23 @@ export default function App() {
               <Gavel className="w-5 h-5 text-black" />
             </div>
             <div>
-              <h1 className="text-sm font-bold tracking-tight text-white uppercase">Edict Architecture</h1>
-              <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Multi-Agent Governance</p>
+              <h1 className="text-sm font-bold tracking-tight text-white uppercase">{t('appTitle')}</h1>
+              <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('appSubtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-full border border-zinc-700/50 text-zinc-400 hover:text-zinc-200 transition-all text-xs font-mono"
+              title={lang === 'en' ? 'Switch to 中文' : 'Switch to English'}
+            >
+              <Globe className="w-3 h-3" />
+              <span>{lang === 'en' ? 'EN' : '中文'}</span>
+            </button>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-full border border-zinc-700/50">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-mono text-zinc-400 uppercase">System Online</span>
+              <span className="text-[10px] font-mono text-zinc-400 uppercase">{t('systemOnline')}</span>
             </div>
           </div>
         </div>
@@ -131,27 +195,27 @@ export default function App() {
         <div className="col-span-4 space-y-6">
           <section className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
             <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Plus className="w-3 h-3" /> Issue New Decree
+              <Plus className="w-3 h-3" /> {t('issueNew')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <textarea
                 value={newPrompt}
                 onChange={(e) => setNewPrompt(e.target.value)}
-                placeholder="Enter your command for the empire..."
+                placeholder={t('inputPlaceholder')}
                 className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-sm focus:outline-none focus:border-zinc-600 transition-colors resize-none placeholder:text-zinc-700"
               />
               <button
                 disabled={loading || !newPrompt.trim()}
                 className="w-full py-3 bg-zinc-100 hover:bg-white text-black text-xs font-bold uppercase tracking-widest rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Dispatch Decree'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('dispatch')}
               </button>
             </form>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2 flex items-center gap-2">
-              <History className="w-3 h-3" /> Recent Decrees
+              <History className="w-3 h-3" /> {t('recentDecrees')}
             </h2>
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
               {tasks.map((task) => (
@@ -167,7 +231,7 @@ export default function App() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded-full border", getStatusColor(task.status))}>
-                      {task.status}
+                      {t(task.status)}
                     </span>
                     <span className="text-[10px] font-mono text-zinc-600">
                       {new Date(task.createdAt).toLocaleTimeString()}
@@ -203,7 +267,7 @@ export default function App() {
                     <div className="text-right">
                       <div className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-xl border font-mono text-xs", getStatusColor(selectedTask.status))}>
                         {selectedTask.status === TaskStatus.EXECUTING && <Loader2 className="w-3 h-3 animate-spin" />}
-                        {selectedTask.status}
+                        {t(selectedTask.status)}
                       </div>
                     </div>
                   </div>
@@ -213,7 +277,8 @@ export default function App() {
                     <div className="absolute top-1/2 left-0 w-full h-px bg-zinc-800 -translate-y-1/2" />
                     <div className="flex justify-between relative z-10">
                       {[TaskStatus.TRIAGE, TaskStatus.PLANNING, TaskStatus.REVIEW, TaskStatus.EXECUTING, TaskStatus.COMPLETED].map((s, i) => {
-                        const isPast = [TaskStatus.TRIAGE, TaskStatus.PLANNING, TaskStatus.REVIEW, TaskStatus.EXECUTING, TaskStatus.COMPLETED].indexOf(selectedTask.status) >= i;
+                        const stepIndex = [TaskStatus.TRIAGE, TaskStatus.PLANNING, TaskStatus.REVIEW, TaskStatus.EXECUTING, TaskStatus.COMPLETED].indexOf(selectedTask.status);
+                        const isPast = stepIndex >= i;
                         const isCurrent = selectedTask.status === s;
                         return (
                           <div key={s} className="flex flex-col items-center gap-3">
@@ -225,7 +290,7 @@ export default function App() {
                               {isPast && !isCurrent ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
                             </div>
                             <span className={cn("text-[10px] font-mono uppercase tracking-widest", isPast ? "text-zinc-300" : "text-zinc-600")}>
-                              {s}
+                              {t(s)}
                             </span>
                           </div>
                         );
@@ -239,7 +304,7 @@ export default function App() {
                   {/* Audit Logs */}
                   <section className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col h-[400px]">
                     <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <History className="w-3 h-3" /> Audit Trail
+                      <History className="w-3 h-3" /> {t('auditTrail')}
                     </h3>
                     <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
                       {selectedTask.logs?.map((log: AuditLog) => (
@@ -264,7 +329,7 @@ export default function App() {
                   {/* Subtasks / Ministries */}
                   <section className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col h-[400px]">
                     <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Users className="w-3 h-3" /> Ministry Execution
+                      <Users className="w-3 h-3" /> {t('ministryExecution')}
                     </h3>
                     <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                       {selectedTask.subtasks?.length > 0 ? (
@@ -295,7 +360,7 @@ export default function App() {
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-zinc-600 space-y-2">
                           <Clock className="w-8 h-8 opacity-20" />
-                          <p className="text-xs font-mono uppercase tracking-widest">Awaiting Dispatch</p>
+                          <p className="text-xs font-mono uppercase tracking-widest">{t('awaitingDispatch')}</p>
                         </div>
                       )}
                     </div>
@@ -303,14 +368,14 @@ export default function App() {
                 </div>
 
                 {/* Final Result */}
-                {selectedTask.status === TaskStatus.COMPLETED && selectedTask.metadata.finalResult && (
+                {selectedTask.status === TaskStatus.COMPLETED && selectedTask.metadata?.finalResult && (
                   <motion.section
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-8"
                   >
                     <h3 className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="w-3 h-3" /> Imperial Decree Fulfilled
+                      <CheckCircle2 className="w-3 h-3" /> {t('imperialDecreeFulfilled')}
                     </h3>
                     <div className="prose prose-invert prose-sm max-w-none">
                       <p className="text-zinc-200 leading-relaxed whitespace-pre-wrap">
@@ -324,8 +389,8 @@ export default function App() {
               <div className="h-[600px] flex flex-col items-center justify-center text-zinc-700 space-y-4 border-2 border-dashed border-zinc-800 rounded-3xl">
                 <Scroll className="w-12 h-12 opacity-20" />
                 <div className="text-center">
-                  <p className="text-sm font-medium uppercase tracking-widest">No Decree Selected</p>
-                  <p className="text-xs text-zinc-500 mt-1">Select a task from the history or issue a new one</p>
+                  <p className="text-sm font-medium uppercase tracking-widest">{t('noDecreeSelected')}</p>
+                  <p className="text-xs text-zinc-500 mt-1">{t('noDecreeHint')}</p>
                 </div>
               </div>
             )}

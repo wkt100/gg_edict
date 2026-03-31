@@ -8,7 +8,7 @@ import bodyParser from "body-parser";
 import { getDb } from "./server/db";
 import { processWorkflow } from "./server/workflow";
 import { v4 as uuidv4 } from 'uuid';
-import { TaskStatus } from "./src/types";
+import { TaskStatus, AgentRole } from "./src/types";
 
 async function startServer() {
   const app = express();
