@@ -1,7 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AgentRole, TriageSchema, PlanningSchema, ReviewSchema } from "../src/types";
+import { callMinimax } from "./minimax";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+// Provider selection: "minimax" | "gemini"
+const AI_PROVIDER = process.env.AI_PROVIDER || "minimax";
 
 const SYSTEM_PROMPTS: Record<AgentRole, string> = {
   [AgentRole.TAIZI]: `You are the Crown Prince (Taizi). Your role is Intent Extraction & Triage. 
@@ -33,16 +35,31 @@ const SYSTEM_PROMPTS: Record<AgentRole, string> = {
 };
 
 export async function callAgent(role: AgentRole, prompt: string, schema?: any) {
+  const systemPrompt = SYSTEM_PROMPTS[role];
+
+  if (AI_PROVIDER === "minimax") {
+    const result = await callMinimax(systemPrompt, prompt, !!schema);
+    if (schema) {
+      try {
+        return JSON.parse(result);
+      } catch (e) {
+        console.error(`Failed to parse agent response as JSON: ${result}`);
+        throw new Error("Agent returned invalid JSON");
+      }
+    }
+    return result;
+  }
+
+  // Gemini fallback
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   const model = "gemini-3-flash-preview";
   
   const config: any = {
-    systemInstruction: SYSTEM_PROMPTS[role],
+    systemInstruction: systemPrompt,
   };
 
   if (schema) {
     config.responseMimeType = "application/json";
-    // Simplified schema conversion for Gemini SDK
-    // In a real app, we'd convert Zod to Gemini Schema
   }
 
   const response = await ai.models.generateContent({
