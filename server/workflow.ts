@@ -43,6 +43,10 @@ async function handleTask(task: Task) {
     case TaskStatus.REDUCING:
       await runReduction(task);
       break;
+    case TaskStatus.ESCALATED:
+      // ESCALATED = requires human input. Just log and wait.
+      await logAudit(task.id, AgentRole.EMPEROR, 'ESCALATED_AWAIT', 'Task awaits Emperor input.');
+      break;
   }
 }
 
