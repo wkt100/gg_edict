@@ -61,12 +61,13 @@ export async function callAgent(role: AgentRole, prompt: string, schema?: any) {
   const systemPrompt = SYSTEM_PROMPTS[role];
 
   if (AI_PROVIDER === "minimax") {
-    const result = await callMinimax(systemPrompt, prompt, !!schema);
+    // jsonMode=true for minimax, but still use extractJson for robustness
+    const result = await callMinimax(systemPrompt, prompt, false);
     if (schema) {
       try {
         return JSON.parse(extractJson(result));
       } catch (e) {
-        console.error(`Failed to parse agent response as JSON: ${result}`);
+        console.error(`Failed to parse agent response as JSON: ${result.slice(0, 100)}`);
         throw new Error("Agent returned invalid JSON");
       }
     }
@@ -74,12 +75,13 @@ export async function callAgent(role: AgentRole, prompt: string, schema?: any) {
   }
 
   if (AI_PROVIDER === "deepseek") {
-    const result = await callDeepSeek(systemPrompt, prompt, !!schema);
+    // DeepSeek json_object mode not always respected, always use text mode + extract
+    const result = await callDeepSeek(systemPrompt, prompt, false);
     if (schema) {
       try {
         return JSON.parse(extractJson(result));
       } catch (e) {
-        console.error(`Failed to parse agent response as JSON: ${result}`);
+        console.error(`Failed to parse agent response as JSON: ${result.slice(0, 100)}`);
         throw new Error("Agent returned invalid JSON");
       }
     }
