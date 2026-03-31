@@ -89,7 +89,7 @@ export default function App() {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [newPrompt, setNewPrompt] = useState('');
   const [loading, setLoading] = useState(false);
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLang] = useState<Lang>('zh');
 
   const t = (key: string) => I18N[lang][key] || key;
 
